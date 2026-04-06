@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import { isRedirectError } from 'next/dist/client/components/redirect'
 
 export async function login(formData: FormData) {
     const email = formData.get('email') as string
@@ -18,37 +17,20 @@ export async function login(formData: FormData) {
         return { error: 'Configuration Supabase manquante. Contactez l\'administrateur.' }
     }
 
-    try {
-        const supabase = await createClient()
+    const supabase = await createClient()
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    })
 
-        if (error) {
-            // Gestion spécifique des erreurs courantes
-            if (error.message.includes('Invalid login credentials')) {
-                return { error: 'Email ou mot de passe incorrect' }
-            }
-            if (error.message.includes('Email not confirmed')) {
-                return { error: 'Veuillez confirmer votre email avant de vous connecter' }
-            }
-            if (error.message.includes('fetch failed')) {
-                return { error: 'Erreur de connexion au serveur. Vérifiez votre connexion internet.' }
-            }
-            return { error: error.message }
-        }
-
-        // Si succès, redirection vers l'interface Agent
-        redirect('/agent')
-    } catch (err) {
-        if (isRedirectError(err)) {
-            throw err  // Laisser la redirection se produire
-        }
-        console.error('Erreur lors de la connexion:', err)
-        return { error: 'Une erreur technique est survenue. Veuillez réessayer.' }
+    if (error) {
+        console.error('Erreur login:', error)
+        return { error: 'Email ou mot de passe incorrect' }
     }
+
+    // ✅ redirect en dehors de try/catch
+    redirect('/agent')
 }
 
 export async function signUp(formData: FormData) {
@@ -67,33 +49,23 @@ export async function signUp(formData: FormData) {
         return { error: 'Configuration Supabase manquante. Contactez l\'administrateur.' }
     }
 
-    try {
-        const supabase = await createClient()
+    const supabase = await createClient()
 
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login`
-            }
-        })
+    const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login`
+        }
+    })
 
-        if (error) {
-            if (error.message.includes('User already registered')) {
-                return { error: 'Cet email est déjà utilisé. Essayez de vous connecter.' }
-            }
-            return { error: error.message }
-        }
+    if (error) {
+        console.error('Erreur inscription:', error)
+        return { error: 'Cet email est déjà utilisé. Essayez de vous connecter.' }
+    }
 
-        return { 
-            success: 'Compte créé avec succès ! Veuillez vérifier votre email pour activer votre compte.',
-            needsEmailConfirmation: true
-        }
-    } catch (err) {
-        if (isRedirectError(err)) {
-            throw err  // Laisser la redirection se produire
-        }
-        console.error('Erreur lors de l\'inscription:', err)
-        return { error: 'Une erreur technique est survenue. Veuillez réessayer.' }
+    return { 
+        success: 'Compte créé avec succès ! Veuillez vérifier votre email pour activer votre compte.',
+        needsEmailConfirmation: true
     }
 }
