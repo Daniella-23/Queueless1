@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import { getRedirectError } from 'next/dist/client/components/redirect'
+import { isRedirectError } from 'next/dist/client/components/redirect'
 
 export async function login(formData: FormData) {
     const email = formData.get('email') as string
@@ -43,7 +43,7 @@ export async function login(formData: FormData) {
         // Si succès, redirection vers l'interface Agent
         redirect('/agent')
     } catch (err) {
-        if (getRedirectError(err)) {
+        if (isRedirectError(err)) {
             throw err  // Laisser la redirection se produire
         }
         console.error('Erreur lors de la connexion:', err)
@@ -90,7 +90,7 @@ export async function signUp(formData: FormData) {
             needsEmailConfirmation: true
         }
     } catch (err) {
-        if (getRedirectError(err)) {
+        if (isRedirectError(err)) {
             throw err  // Laisser la redirection se produire
         }
         console.error('Erreur lors de l\'inscription:', err)
